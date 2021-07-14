@@ -3,13 +3,6 @@ import base64
 import json
 from types import SimpleNamespace
 
-f = open("event.json","r")
-text = f.read()
-data = json.loads(text, object_hook=lambda d: SimpleNamespace(**d))
-
-svc_name = data.protoPayload.request.service.metadata.name
-svc_url = data.protoPayload.request.service.status.url
-
 print(f'name: {svc_name} url: {svc_url}')
 
 def srv_pubsub(event, context):
