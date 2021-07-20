@@ -24,8 +24,9 @@ def audit_event(event, context):
 
 
 
-  print(f'zone: {zone_name} exists? {zone.exists()}')
 
-def create_srv_record(zone, name, url, port ):
-  client = dns.Client(project=project_name)
-  zone = client.zone(zone_name)
+def create_srv_record(project, zone_name, svc_name, svc_url, svc_port ):
+  client = dns.Client(project=project)
+  dns_zone = client.zone(zone_name)
+
+  print(f'zone: {zone_name} exists? {dns_zone.exists()}')
