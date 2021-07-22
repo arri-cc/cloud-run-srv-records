@@ -1,126 +1,52 @@
 
+import srv
+import json
+import mock
 
-data = """
+add_record_event = json.loads("""
 {
-  "protoPayload": {
-    "@type": "type.googleapis.com/google.cloud.audit.AuditLog",
-    "status": {
-      "message": "Ready condition status changed to True for Service hello2."
+  "message": {
+    "attributes": {
+      "logging.googleapis.com/timestamp": "2021-07-22T22:42:25.423707Z"
     },
-    "serviceName": "run.googleapis.com",
-    "resourceName": "namespaces/arri-primary/services/hello2",
-    "response": {
-      "metadata": {
-        "name": "hello2",
-        "namespace": "583714681478",
-        "selfLink": "/apis/serving.knative.dev/v1/namespaces/583714681478/services/hello2",
-        "uid": "3bb526ff-065e-4b1c-a91f-414b5233c008",
-        "resourceVersion": "AAXHvGQ9q5U",
-        "generation": 4,
-        "creationTimestamp": "2021-07-12T23:53:28.990284Z",
-        "labels": {
-          "cloud.googleapis.com/location": "us-east4"
-        },
-        "annotations": {
-          "run.googleapis.com/client-name": "cloud-console",
-          "serving.knative.dev/creator": "arri@doit-intl.com",
-          "serving.knative.dev/lastModifier": "arri@doit-intl.com",
-          "client.knative.dev/user-image": "gcr.io/google-samples/hello-app:2.0",
-          "run.googleapis.com/ingress": "all",
-          "run.googleapis.com/ingress-status": "all"
-        }
-      },
-      "apiVersion": "serving.knative.dev/v1",
-      "kind": "Service",
-      "spec": {
-        "template": {
-          "metadata": {
-            "name": "hello2-00004-yiz",
-            "annotations": {
-              "run.googleapis.com/client-name": "cloud-console",
-              "autoscaling.knative.dev/maxScale": "100",
-              "run.googleapis.com/sandbox": "gvisor"
-            }
-          },
-          "spec": {
-            "containerConcurrency": 80,
-            "timeoutSeconds": 300,
-            "serviceAccountName": "583714681478-compute@developer.gserviceaccount.com",
-            "containers": [
-              {
-                "image": "gcr.io/google-samples/hello-app:2.0",
-                "ports": [
-                  {
-                    "containerPort": 8080
-                  }
-                ],
-                "resources": {
-                  "limits": {
-                    "cpu": "1000m",
-                    "memory": "128Mi"
-                  }
-                }
-              }
-            ]
-          }
-        },
-        "traffic": [
-          {
-            "percent": 100,
-            "latestRevision": true
-          }
-        ]
-      },
-      "status": {
-        "observedGeneration": 4,
-        "conditions": [
-          {
-            "type": "Ready",
-            "status": "True",
-            "lastTransitionTime": "2021-07-22T20:47:13.095573Z"
-          },
-          {
-            "type": "ConfigurationsReady",
-            "status": "True",
-            "lastTransitionTime": "2021-07-22T20:47:06.036611Z"
-          },
-          {
-            "type": "RoutesReady",
-            "status": "True",
-            "lastTransitionTime": "2021-07-22T20:47:13.095573Z"
-          }
-        ],
-        "latestReadyRevisionName": "hello2-00004-yiz",
-        "latestCreatedRevisionName": "hello2-00004-yiz",
-        "traffic": [
-          {
-            "revisionName": "hello2-00004-yiz",
-            "percent": 100,
-            "latestRevision": true
-          }
-        ],
-        "url": "https://hello2-2n65kqmpcq-uk.a.run.app",
-        "address": {
-          "url": "https://hello2-2n65kqmpcq-uk.a.run.app"
-        }
-      },
-      "@type": "type.googleapis.com/google.cloud.run.v1.Service"
-    }
+    "data": "eyJpbnNlcnRJZCI6Inh4eHh4eHh4eHgiLCJsb2dOYW1lIjoicHJvamVjdHMveHh4eHh4eHh4eC9sb2dzL2Nsb3VkYXVkaXQuZ29vZ2xlYXBpcy5jb20lMkZzeXN0ZW1fZXZlbnQiLCJwcm90b1BheWxvYWQiOnsiQHR5cGUiOiJ0eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5jbG91ZC5hdWRpdC5BdWRpdExvZyIsInJlc291cmNlTmFtZSI6Im5hbWVzcGFjZXMveHh4eHh4eHh4eC9zZXJ2aWNlcy9oZWxsbyIsInJlc3BvbnNlIjp7IkB0eXBlIjoidHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY2xvdWQucnVuLnYxLlNlcnZpY2UiLCJhcGlWZXJzaW9uIjoic2VydmluZy5rbmF0aXZlLmRldi92MSIsImtpbmQiOiJTZXJ2aWNlIiwibWV0YWRhdGEiOnsiYW5ub3RhdGlvbnMiOnsiY2xpZW50LmtuYXRpdmUuZGV2L3VzZXItaW1hZ2UiOiJnY3IuaW8vZ29vZ2xlLXNhbXBsZXMvaGVsbG8tYXBwOjEuMCIsInJ1bi5nb29nbGVhcGlzLmNvbS9jbGllbnQtbmFtZSI6ImNsb3VkLWNvbnNvbGUiLCJydW4uZ29vZ2xlYXBpcy5jb20vaW5ncmVzcyI6ImFsbCIsInJ1bi5nb29nbGVhcGlzLmNvbS9pbmdyZXNzLXN0YXR1cyI6ImFsbCIsInNlcnZpbmcua25hdGl2ZS5kZXYvY3JlYXRvciI6ImVtYWlsQGV4YW1wbGUuY29tIiwic2VydmluZy5rbmF0aXZlLmRldi9sYXN0TW9kaWZpZXIiOiJlbWFpbEBleGFtcGxlLmNvbSJ9LCJjcmVhdGlvblRpbWVzdGFtcCI6IjIwMjEtMDctMjJUMjA6NDE6MDYuMDA3ODI4WiIsImdlbmVyYXRpb24iOjQsImxhYmVscyI6eyJjbG91ZC5nb29nbGVhcGlzLmNvbS9sb2NhdGlvbiI6InVzLWNlbnRyYWwxIn0sIm5hbWUiOiJoZWxsbyIsIm5hbWVzcGFjZSI6IjAwMDAwMDAwMDAwMCIsInJlc291cmNlVmVyc2lvbiI6IkFBWEh2Z0EvcWQwIiwic2VsZkxpbmsiOiIvYXBpcy9zZXJ2aW5nLmtuYXRpdmUuZGV2L3YxL25hbWVzcGFjZXMvMDAwMDAwMDAwMDAvc2VydmljZXMvaGVsbG8iLCJ1aWQiOiIyNGZiYzQ4Mi02N2ExLTQ5NTEtODQwNy1hNjljYmE5NWZiNzAifSwic3BlYyI6eyJ0ZW1wbGF0ZSI6eyJtZXRhZGF0YSI6eyJhbm5vdGF0aW9ucyI6eyJhdXRvc2NhbGluZy5rbmF0aXZlLmRldi9tYXhTY2FsZSI6IjEwMCIsInJ1bi5nb29nbGVhcGlzLmNvbS9jbGllbnQtbmFtZSI6ImNsb3VkLWNvbnNvbGUiLCJydW4uZ29vZ2xlYXBpcy5jb20vc2FuZGJveCI6Imd2aXNvciJ9LCJuYW1lIjoiaGVsbG8tMDAwMDQtdmlqIn0sInNwZWMiOnsiY29udGFpbmVyQ29uY3VycmVuY3kiOjgwLCJjb250YWluZXJzIjpbeyJpbWFnZSI6Imdjci5pby9nb29nbGUtc2FtcGxlcy9oZWxsby1hcHA6MS4wIiwicG9ydHMiOlt7ImNvbnRhaW5lclBvcnQiOjgwODB9XSwicmVzb3VyY2VzIjp7ImxpbWl0cyI6eyJjcHUiOiIxMDAwbSIsIm1lbW9yeSI6IjUxMk1pIn19fV0sInNlcnZpY2VBY2NvdW50TmFtZSI6IjAwMDAwMDAwMDAwLWNvbXB1dGVAZGV2ZWxvcGVyLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJ0aW1lb3V0U2Vjb25kcyI6MzAwfX0sInRyYWZmaWMiOlt7ImxhdGVzdFJldmlzaW9uIjp0cnVlLCJwZXJjZW50IjoxMDB9XX0sInN0YXR1cyI6eyJhZGRyZXNzIjp7InVybCI6Imh0dHBzOi8vaGVsbG8teHh4eHh4eHh4eC11Yy5hLnJ1bi5hcHAifSwiY29uZGl0aW9ucyI6W3sibGFzdFRyYW5zaXRpb25UaW1lIjoiMjAyMS0wNy0yMlQyMjo0MjoyNS40MzkxOTdaIiwic3RhdHVzIjoiVHJ1ZSIsInR5cGUiOiJSZWFkeSJ9LHsibGFzdFRyYW5zaXRpb25UaW1lIjoiMjAyMS0wNy0yMlQyMjo0MjoxOS43NzQzNzhaIiwic3RhdHVzIjoiVHJ1ZSIsInR5cGUiOiJDb25maWd1cmF0aW9uc1JlYWR5In0seyJsYXN0VHJhbnNpdGlvblRpbWUiOiIyMDIxLTA3LTIyVDIyOjQyOjI1LjQzOTE5N1oiLCJzdGF0dXMiOiJUcnVlIiwidHlwZSI6IlJvdXRlc1JlYWR5In1dLCJsYXRlc3RDcmVhdGVkUmV2aXNpb25OYW1lIjoiaGVsbG8tMDAwMDQtdmlqIiwibGF0ZXN0UmVhZHlSZXZpc2lvbk5hbWUiOiJoZWxsby0wMDAwNC12aWoiLCJvYnNlcnZlZEdlbmVyYXRpb24iOjQsInRyYWZmaWMiOlt7ImxhdGVzdFJldmlzaW9uIjp0cnVlLCJwZXJjZW50IjoxMDAsInJldmlzaW9uTmFtZSI6ImhlbGxvLTAwMDA0LXZpaiJ9XSwidXJsIjoiaHR0cHM6Ly9oZWxsby14eHh4eHh4eHh4LXVjLmEucnVuLmFwcCJ9fSwic2VydmljZU5hbWUiOiJydW4uZ29vZ2xlYXBpcy5jb20iLCJzdGF0dXMiOnsibWVzc2FnZSI6IlJlYWR5IGNvbmRpdGlvbiBzdGF0dXMgY2hhbmdlZCB0byBUcnVlIGZvciBTZXJ2aWNlIGhlbGxvLiJ9fSwicmVjZWl2ZVRpbWVzdGFtcCI6IjIwMjEtMDctMjJUMjI6NDI6MjYuMzM1NzI4OTU2WiIsInJlc291cmNlIjp7ImxhYmVscyI6eyJjb25maWd1cmF0aW9uX25hbWUiOiIiLCJsb2NhdGlvbiI6InVzLWNlbnRyYWwxIiwicHJvamVjdF9pZCI6Inh4eHh4eHh4eHgiLCJyZXZpc2lvbl9uYW1lIjoiIiwic2VydmljZV9uYW1lIjoiaGVsbG8ifSwidHlwZSI6ImNsb3VkX3J1bl9yZXZpc2lvbiJ9LCJzZXZlcml0eSI6IklORk8iLCJ0aW1lc3RhbXAiOiIyMDIxLTA3LTIyVDIyOjQyOjI1LjQyMzcwN1oifQo=",
+    "messageId": "2760603656095950",
+    "message_id": "2760603656095950",
+    "publishTime": "2021-07-22T22:42:27.625Z",
+    "publish_time": "2021-07-22T22:42:27.625Z"
   },
-  "insertId": "-oyxjcaca52",
-  "resource": {
-    "type": "cloud_run_revision",
-    "labels": {
-      "revision_name": "",
-      "service_name": "hello2",
-      "project_id": "arri-primary",
-      "configuration_name": "",
-      "location": "us-east4"
-    }
-  },
-  "timestamp": "2021-07-22T20:47:13.081098Z",
-  "severity": "INFO",
-  "logName": "projects/arri-primary/logs/cloudaudit.googleapis.com%2Fsystem_event",
-  "receiveTimestamp": "2021-07-22T20:47:14.503627388Z"
+  "subscription": "projects/xxxxxxxxxx/subscriptions/push"
 }
-"""
+""")
+
+delete_record_event = json.loads("""
+{
+  "message": {
+    "attributes": {
+      "logging.googleapis.com/timestamp": "2021-07-22T22:54:59.257588Z"
+    },
+    "data": "eyJpbnNlcnRJZCI6Inh4eHh4eHh4eHgiLCJsb2dOYW1lIjoicHJvamVjdHMveHh4eHh4eHh4eC9sb2dzL2Nsb3VkYXVkaXQuZ29vZ2xlYXBpcy5jb20lMkZzeXN0ZW1fZXZlbnQiLCJwcm90b1BheWxvYWQiOnsiQHR5cGUiOiJ0eXBlLmdvb2dsZWFwaXMuY29tL2dvb2dsZS5jbG91ZC5hdWRpdC5BdWRpdExvZyIsInJlc291cmNlTmFtZSI6Im5hbWVzcGFjZXMveHh4eHh4eHh4eC9zZXJ2aWNlcy9oZWxsbyIsInJlc3BvbnNlIjp7IkB0eXBlIjoidHlwZS5nb29nbGVhcGlzLmNvbS9nb29nbGUuY2xvdWQucnVuLnYxLlNlcnZpY2UiLCJhcGlWZXJzaW9uIjoic2VydmluZy5rbmF0aXZlLmRldi92MSIsImtpbmQiOiJTZXJ2aWNlIiwibWV0YWRhdGEiOnsiYW5ub3RhdGlvbnMiOnsiY2xpZW50LmtuYXRpdmUuZGV2L3VzZXItaW1hZ2UiOiJnY3IuaW8vZ29vZ2xlLXNhbXBsZXMvaGVsbG8tYXBwOjEuMCIsInJ1bi5nb29nbGVhcGlzLmNvbS9jbGllbnQtbmFtZSI6ImNsb3VkLWNvbnNvbGUiLCJydW4uZ29vZ2xlYXBpcy5jb20vaW5ncmVzcyI6ImFsbCIsInJ1bi5nb29nbGVhcGlzLmNvbS9pbmdyZXNzLXN0YXR1cyI6ImFsbCIsInNlcnZpbmcua25hdGl2ZS5kZXYvY3JlYXRvciI6ImVtYWlsQGV4YW1wbGUuY29tIiwic2VydmluZy5rbmF0aXZlLmRldi9sYXN0TW9kaWZpZXIiOiJlbWFpbEBleGFtcGxlLmNvbSJ9LCJjcmVhdGlvblRpbWVzdGFtcCI6IjIwMjEtMDctMDdUMTc6Mjg6MzkuNTg4MDE1WiIsImRlbGV0aW9uVGltZXN0YW1wIjoiMjAyMS0wNy0yMlQyMjo1NDo1NS43MDE4NzNaIiwiZ2VuZXJhdGlvbiI6NSwibGFiZWxzIjp7ImNsb3VkLmdvb2dsZWFwaXMuY29tL2xvY2F0aW9uIjoidXMtY2VudHJhbDEifSwibmFtZSI6ImhlbGxvIiwibmFtZXNwYWNlIjoiMDAwMDAwMDAwMDAwIiwicmVzb3VyY2VWZXJzaW9uIjoiQUFYSHZpMHVYdEEiLCJzZWxmTGluayI6Ii9hcGlzL3NlcnZpbmcua25hdGl2ZS5kZXYvdjEvbmFtZXNwYWNlcy8wMDAwMDAwMDAwMDAvc2VydmljZXMvaGVsbG8iLCJ1aWQiOiJiNzg0ZjVkYy1jYmY2LTQyNjktYjMwZC00NmI3MDM3ODE4NzgifSwic3BlYyI6eyJ0ZW1wbGF0ZSI6eyJtZXRhZGF0YSI6eyJhbm5vdGF0aW9ucyI6eyJhdXRvc2NhbGluZy5rbmF0aXZlLmRldi9tYXhTY2FsZSI6IjEwMCIsInJ1bi5nb29nbGVhcGlzLmNvbS9jbGllbnQtbmFtZSI6ImNsb3VkLWNvbnNvbGUiLCJydW4uZ29vZ2xlYXBpcy5jb20vc2FuZGJveCI6Imd2aXNvciJ9LCJuYW1lIjoiaGVsbG8tMDAwMDQteGF0In0sInNwZWMiOnsiY29udGFpbmVyQ29uY3VycmVuY3kiOjEsImNvbnRhaW5lcnMiOlt7ImltYWdlIjoiZ2NyLmlvL2dvb2dsZS1zYW1wbGVzL2hlbGxvLWFwcDoxLjAiLCJwb3J0cyI6W3siY29udGFpbmVyUG9ydCI6ODA4MH1dLCJyZXNvdXJjZXMiOnsibGltaXRzIjp7ImNwdSI6IjEwMDBtIiwibWVtb3J5IjoiMjU2TWkifX19XSwic2VydmljZUFjY291bnROYW1lIjoiMDAwMDAwMDAwMDAwLWNvbXB1dGVAZGV2ZWxvcGVyLmdzZXJ2aWNlYWNjb3VudC5jb20iLCJ0aW1lb3V0U2Vjb25kcyI6MzAwfX0sInRyYWZmaWMiOlt7ImxhdGVzdFJldmlzaW9uIjp0cnVlLCJwZXJjZW50IjoxMDB9XX0sInN0YXR1cyI6eyJhZGRyZXNzIjp7InVybCI6Imh0dHBzOi8vaGVsbG8teHh4eHh4eHh4eC11ay5hLnJ1bi5hcHAifSwiY29uZGl0aW9ucyI6W3sibGFzdFRyYW5zaXRpb25UaW1lIjoiMjAyMS0wNy0yMlQyMjo1NDo1OS4yODA1OTJaIiwibWVzc2FnZSI6IkRlbGV0aW9uIGluIHByb2dyZXNzLiIsInN0YXR1cyI6IlRydWUiLCJ0eXBlIjoiUmVhZHkifSx7Imxhc3RUcmFuc2l0aW9uVGltZSI6IjIwMjEtMDctMjJUMjA6NDc6MTkuMjk1MjY5WiIsInN0YXR1cyI6IlRydWUiLCJ0eXBlIjoiQ29uZmlndXJhdGlvbnNSZWFkeSJ9LHsibGFzdFRyYW5zaXRpb25UaW1lIjoiMjAyMS0wNy0yMlQyMDo0NzoyNC43OTQzMzBaIiwic3RhdHVzIjoiVHJ1ZSIsInR5cGUiOiJSb3V0ZXNSZWFkeSJ9XSwibGF0ZXN0Q3JlYXRlZFJldmlzaW9uTmFtZSI6ImhlbGxvLTAwMDA0LXhhdCIsImxhdGVzdFJlYWR5UmV2aXNpb25OYW1lIjoiaGVsbG8tMDAwMDQteGF0Iiwib2JzZXJ2ZWRHZW5lcmF0aW9uIjo1LCJ0cmFmZmljIjpbeyJsYXRlc3RSZXZpc2lvbiI6dHJ1ZSwicGVyY2VudCI6MTAwLCJyZXZpc2lvbk5hbWUiOiJoZWxsby0wMDAwNC14YXQifV0sInVybCI6Imh0dHBzOi8vaGVsbG8teHh4eHh4eHh4eC11ay5hLnJ1bi5hcHAifX0sInNlcnZpY2VOYW1lIjoicnVuLmdvb2dsZWFwaXMuY29tIiwic3RhdHVzIjp7Im1lc3NhZ2UiOiJSZWFkeSBjb25kaXRpb24gc3RhdHVzIGNoYW5nZWQgdG8gVHJ1ZSBmb3IgU2VydmljZSBoZWxsbyB3aXRoIG1lc3NhZ2U6IERlbGV0aW9uIGluIHByb2dyZXNzLiJ9fSwicmVjZWl2ZVRpbWVzdGFtcCI6IjIwMjEtMDctMjJUMjI6NTU6MDAuMDQyMzg4MzI3WiIsInJlc291cmNlIjp7ImxhYmVscyI6eyJjb25maWd1cmF0aW9uX25hbWUiOiIiLCJsb2NhdGlvbiI6InVzLWNlbnRyYWwxIiwicHJvamVjdF9pZCI6Inh4eHh4eHh4eHgiLCJyZXZpc2lvbl9uYW1lIjoiIiwic2VydmljZV9uYW1lIjoiaGVsbG8ifSwidHlwZSI6ImNsb3VkX3J1bl9yZXZpc2lvbiJ9LCJzZXZlcml0eSI6IklORk8iLCJ0aW1lc3RhbXAiOiIyMDIxLTA3LTIyVDIyOjU0OjU5LjI1NzU4OFoifQo=",
+    "messageId": "2660698503145936",
+    "message_id": "2660698503145936",
+    "publishTime": "2021-07-22T22:55:00.523Z",
+    "publish_time": "2021-07-22T22:55:00.523Z"
+  },
+  "subscription": "projects/xxxxxxxxxx/subscriptions/push"
+}
+""")
+
+mock_context = mock.Mock()
+mock_context.event_id = '000000000000'
+mock_context.timestamp = '2021-07-22T22:55:00.523Z'
+mock_context.resource = {
+    'name': 'projects/xxxxxxxxxx/topics/xxxxxxxxxx',
+    'service': 'pubsub.googleapis.com',
+    'type': 'type.googleapis.com/google.pubsub.v1.PubsubMessage',
+}
+
+
+def main():
+    srv.audit_event(add_record_event, mock_context)
+
+
+main()

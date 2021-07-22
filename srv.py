@@ -9,8 +9,8 @@ from google.cloud.dns.zone import ManagedZone
 
 
 def audit_event(event, context):
-    project = 'arri-ti-demo'
-    dns_zone_name = 'svc.local'
+    project = 'arri-primary'
+    dns_zone_name = 'svc-local'
     dns_client = dns.Client(project=project)
     dns_zone = dns_client.zone(dns_zone_name)
 
