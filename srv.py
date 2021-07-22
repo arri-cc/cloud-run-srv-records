@@ -70,4 +70,3 @@ def update_dns_record(zone: ManagedZone, dns_record_name, url, port, add=True, )
     while changes.status() != 'done':
         time.sleep(5)
         changes.reload()
-    return
