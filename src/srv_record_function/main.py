@@ -5,6 +5,7 @@ import sys
 import time
 from types import SimpleNamespace
 from urllib.parse import urlparse
+from google.cloud.dns.resource_record_set import ResourceRecordSet
 
 from google.cloud.dns.zone import ManagedZone
 
@@ -32,16 +33,29 @@ def audit_event(event, context):
             f'no data available in event: {context.event_id}', file=sys.stderr)
         return
 
-    svc_name = f'{event_data.protoPayload.response.metadata.name}.svc.local.'
+    svc_name = f'_run._tcp.{event_data.protoPayload.response.metadata.name}.svc.local.'
     svc_host = urlparse(
         event_data.protoPayload.response.status.address.url).hostname
     svc_port = 443  # always the same for now
+    add_record = 'Deletion' not in event_data.protoPayload.status.message
 
     print(f'name: {svc_name} host: {svc_host} port: {svc_port}')
-    update_dns_record(dns_zone, svc_name, svc_host, svc_port, True)
+
+    existing_dns_record = get_existing_dns_record(dns_zone, svc_name)
+
+    update_dns_record(dns_zone, svc_name, svc_host,
+                      svc_port, existing_dns_record, add_record)
 
 
-def update_dns_record(zone: ManagedZone, dns_record_name, host, port, add=True, ):
+def get_existing_dns_record(zone: ManagedZone, dns_record_name) -> ResourceRecordSet:
+    existing_record_sets = list(zone.list_resource_record_sets())
+    for rs in existing_record_sets:
+        if rs.name == dns_record_name:
+            return rs
+    return None
+
+
+def update_dns_record(zone: ManagedZone, dns_record_name, host, port, existing_record: ResourceRecordSet, add=True):
     changes = zone.changes()
 
     dns_record_type = "SRV"
@@ -56,14 +70,26 @@ def update_dns_record(zone: ManagedZone, dns_record_name, host, port, add=True, 
     dns_record = zone.resource_record_set(
         dns_record_name, dns_record_type, dns_record_ttl, dns_record_data)
 
-    if add:
+    if existing_record and add:
         print(
-            f'adding dns record {dns_record_name} {dns_record_ttl} {dns_record_data}')
+            f'replacing existing record {dns_record_name} {dns_record_ttl} {dns_record_data}')
+        changes.delete_record_set(existing_record)
         changes.add_record_set(dns_record)
-    else:
+
+    if not existing_record and add:
         print(
-            f'deleting dns record {dns_record_name} {dns_record_ttl} {dns_record_data}')
-        changes.delete_record_set(dns_record)
+            f'adding new dns record {dns_record_name} {dns_record_ttl} {dns_record_data}')
+        changes.add_record_set(dns_record)
+
+    if existing_record and not add:
+        print(
+            f'deleting existing dns record {dns_record_name} {dns_record_ttl} {dns_record_data}')
+        changes.delete_record_set(existing_record)
+
+    if not existing_record and not add:
+        print(
+            f'cannot delete dns record that does not exist {dns_record_name} {dns_record_ttl} {dns_record_data}')
+        return
 
     # create the changes
     changes.create()

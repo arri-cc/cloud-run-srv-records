@@ -1,7 +1,7 @@
 import base64
-import srv
-import json
+import main
 import mock
+import time
 
 svc_update_message = """
 {
@@ -268,8 +268,15 @@ mock_context.resource = {
 }
 
 
-def main():
-    srv.audit_event(add_record_audit_event, mock_context)
+def test():
+    # test adding new record
+    main.audit_event(add_record_audit_event, mock_context)
+    # test replacing existing record
+    main.audit_event(add_record_audit_event, mock_context)
+    # test deleting existing record
+    main.audit_event(del_record_audit_event, mock_context)
+    # test deleting non-existing record
+    main.audit_event(del_record_audit_event, mock_context)
 
 
-main()
+test()
