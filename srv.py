@@ -4,6 +4,7 @@ import json
 import sys
 import time
 from types import SimpleNamespace
+from urllib.parse import urlparse
 
 from google.cloud.dns.zone import ManagedZone
 
@@ -31,15 +32,16 @@ def audit_event(event, context):
             f'no data available in event: {context.event_id}', file=sys.stderr)
         return
 
-    svc_name = event_data.protoPayload.request.service.metadata.name
-    svc_url = event_data.protoPayload.request.service.status.url
+    svc_name = f'{event_data.protoPayload.response.metadata.name}.svc.local.'
+    svc_host = urlparse(
+        event_data.protoPayload.response.status.address.url).hostname
     svc_port = 443  # always the same for now
 
-    print(f'name: {svc_name} url: {svc_url} port: {svc_port}')
-    update_dns_record(dns_zone, svc_name, svc_url, svc_port, True)
+    print(f'name: {svc_name} host: {svc_host} port: {svc_port}')
+    update_dns_record(dns_zone, svc_name, svc_host, svc_port, True)
 
 
-def update_dns_record(zone: ManagedZone, dns_record_name, url, port, add=True, ):
+def update_dns_record(zone: ManagedZone, dns_record_name, host, port, add=True, ):
     changes = zone.changes()
 
     dns_record_type = "SRV"
@@ -48,8 +50,8 @@ def update_dns_record(zone: ManagedZone, dns_record_name, url, port, add=True, )
     # a RecordSet supports an array of answers as a list of strings
     # create a new RecordSet with SRV type. The SRV Data is formatted
     # <priority> <weight> <port> <url>
-    # e.g.: 0 1 443 example.com
-    dns_record_data = [f'0 1 {port} {url}']
+    # e.g.: 0 1 443 example.com.
+    dns_record_data = [f'0 1 {port} {host}.']
 
     dns_record = zone.resource_record_set(
         dns_record_name, dns_record_type, dns_record_ttl, dns_record_data)
@@ -67,6 +69,6 @@ def update_dns_record(zone: ManagedZone, dns_record_name, url, port, add=True, )
     changes.create()
 
     # wait for changes to complete
-    while changes.status() != 'done':
+    while changes.status != 'done':
         time.sleep(5)
         changes.reload()
