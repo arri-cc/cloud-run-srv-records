@@ -1,6 +1,7 @@
 from google.cloud import dns
 import base64
 import json
+import os
 import sys
 import time
 from types import SimpleNamespace
@@ -11,7 +12,7 @@ from google.cloud.dns.zone import ManagedZone
 
 
 def audit_event(event, context):
-    project = 'arri-primary'
+    project = os.getenv('PROJECT')
     dns_zone_name = 'svc-local'
     dns_client = dns.Client(project=project)
     dns_zone = dns_client.zone(dns_zone_name)
@@ -98,3 +99,4 @@ def update_dns_record(zone: ManagedZone, dns_record_name, host, port, existing_r
     while changes.status != 'done':
         time.sleep(5)
         changes.reload()
+    print(f'successfully processed changes for {dns_record_name}')

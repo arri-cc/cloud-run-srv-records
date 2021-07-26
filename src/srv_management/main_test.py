@@ -1,8 +1,9 @@
 import base64
 import main
 import mock
-import time
+import os
 
+# sa sample event that should result in a SRV record being added or replaced.
 svc_update_message = """
 {
   "insertId": "xxxxxxxxxx",
@@ -127,6 +128,8 @@ svc_update_message = """
   "timestamp": "2021-07-22T22:42:25.423707Z"
 }
 """
+
+# a sample event that should result in the deletion of an existing SRV record.
 svc_delete_message = """
 {
   "insertId": "xxxxxxxxxx",
@@ -253,11 +256,16 @@ svc_delete_message = """
   "timestamp": "2021-07-22T22:54:59.257588Z"
 }
 """
+
+# format as update message PubSub request object
 add_record_audit_event = {
     'data': base64.b64encode(svc_update_message.encode())}
+
+# format as delete message as PubSub request object
 del_record_audit_event = {
     'data': base64.b64encode(svc_delete_message.encode())}
 
+# required mocks for pubsub event context
 mock_context = mock.Mock()
 mock_context.event_id = '000000000000'
 mock_context.timestamp = '2021-07-22T22:55:00.523Z'
@@ -269,6 +277,8 @@ mock_context.resource = {
 
 
 def test():
+    # set project env variable  TODO: UPDATE THIS VALUE
+    os.environ['PROJECT'] = ''
     # test adding new record
     main.audit_event(add_record_audit_event, mock_context)
     # test replacing existing record
@@ -279,4 +289,5 @@ def test():
     main.audit_event(del_record_audit_event, mock_context)
 
 
+# run this basic e2e test
 test()
