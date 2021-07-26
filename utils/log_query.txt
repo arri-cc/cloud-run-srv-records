@@ -1,0 +1,5 @@
+resource.type="cloud_run_revision"
+protoPayload.resourceName:"namespaces/"
+protoPayload.response.status.traffic.latestRevision="true"
+resource.type="cloud_run_revision"
+protoPayload.status.message:"True"
